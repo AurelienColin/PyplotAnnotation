@@ -48,7 +48,7 @@ python -m PyplotAnnotation.PyplotAnnotation *.png inputs masks
 
 The application follows a quite simple automaton:
 
-![](README_files/Diagram.png)
+![](https://raw.githubusercontent.com/Rignak/PyplotAnnotation/master/README_files/Diagram.png)
 
 #### *New image* state (initial state)
 
@@ -178,10 +178,10 @@ The 9-th class act as a eraser of any other layer.
 
 Multiple polygons can be draw for a single label. You can use multiple labels on a single images, and also put points outside the picture.
 
-![](README_files/Figure_1.png)
+![](https://raw.githubusercontent.com/Rignak/PyplotAnnotation/master/README_files/Figure_1.png)
 
 In the *mask_folder*, the following files are created.
 
-![](README_files/Figure_2.png)
+![](https://raw.githubusercontent.com/Rignak/PyplotAnnotation/master/README_files/Figure_2.PNG)
 
 The first one is the concatenation of each class. The two other the segmentation of the class 1 and 2. The class 9 has no file of his own but the mask of the first class is altered by the erasing of a part.
