@@ -12,7 +12,7 @@
 ## Introduction
 
 The goal of the library is to create a software for quick annotation. More specifically, it is used for the generation of a segmentation dataset.
-The application show images in a pyplot window and ask the user to choose a class, choose point to draw a polygon, and validate.
+The application shows images in a pyplot window and asks the user to choose a class, choose points to draw a polygon, and validate.
 
 The application support up to nine classes, multiple polygons per label, and multiple labels per class.
 
@@ -161,7 +161,6 @@ The current polygon is saved (now, it cannot be modified). A new polygon is init
 | 1, 2, 3, 4, 5, 6, 7, 8, 9 | *Class selected* |
 
 
-
 ### Format of the output
 
 After the acceptation of each picture, multiple files are created. 
@@ -175,6 +174,7 @@ Credit for xiao_qiang (#pixiv1754781) for drawing the picture we use in example.
 
 So, here is the figure plotted by the program. You can see the polygons created for the classes 1, 2 and 9.
 The 9-th class act as a eraser of any other layer.
+On the side, the legend contains the color of each class and the currently selectionned class.
 
 Multiple polygons can be draw for a single label. You can use multiple labels on a single images, and also put points outside the picture.
 
@@ -184,4 +184,4 @@ In the *mask_folder*, the following files are created.
 
 ![](https://raw.githubusercontent.com/Rignak/PyplotAnnotation/master/README_files/Figure_2.PNG)
 
-The first one is the concatenation of each class. The two other the segmentation of the class 1 and 2. The class 9 has no file of his own but the mask of the first class is altered by the erasing of a part.
+The first one is the concatenation of each class. The two other the segmentation of the classes 1 and 2. The class 9 has no file of his own but the mask of the first class is altered by the erasion of a part.
