@@ -6,7 +6,7 @@
 - [How to Use](#how-to-use)
     - [The command line](#the-command-line)
     - [Legal actions](#legal-actions)
-    - [Format of the output](#format-of-the-input)
+- [Format of the output](#format-of-the-output)
 - [Examples](#examples)
     
 ## Introduction

@@ -1,10 +1,13 @@
 import os
 import glob
+import json
 from PIL import Image, ImageDraw
+import numpy as np
 
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 import matplotlib.patches as mpatches
+import datetime
 
 import fire
 
@@ -12,8 +15,18 @@ INPUT_FOLDER = "inputs"
 MASK_FOLDER = "masks"
 
 COLORS = ('tab:blue', 'tab:orange', 'tab:green', 'tab:red', 'tab:purple',
-          'tab:brown', 'tab:pink', 'tab:gray', 'white')
+          'tab:brown', 'tab:pink', 'tab:gray', 'tab:olive', 'tab:cyan', 'white')
 
+def save_json(entry):
+    json_filename = 'results.json'
+    if os.path.exists(json_filename):
+        with open(json_filename, 'r') as json_file:
+            json_data = json.load(json_file)
+    else:
+        json_data = {}
+    json_data.update(entry)
+    with open(json_filename, 'w') as json_file:
+        json.dump(json_data, json_file, sort_keys=True)
 
 class Annotater:
 
@@ -25,9 +38,16 @@ class Annotater:
             if event.xdata is None or event.ydata is None:
                 print('Error: "central click" should add a point, but you clicked outside the figure')
                 return
-            point = (event.xdata, event.ydata)
-            self.polygons_details[-1][1].append(point)
-            self.add_point(self.polygons_details[-1][0], point)
+                
+            (x1, y1) = (int(event.xdata), int(event.ydata))
+            if self.rectangle_mode and len(self.polygons_details[-1][1]) == 1:
+                x0, y0 = self.polygons_details[-1][1][0]
+                for point in [(x0, y1), (x1, y1), (x1, y0)]:
+                    self.polygons_details[-1][1].append(point)
+                    self.add_point(self.polygons_details[-1][0], point)
+            else:
+                self.polygons_details[-1][1].append((x1, y1))
+                self.add_point(self.polygons_details[-1][0], (x1, y1))
 
         def right_click_event():
             """
@@ -51,12 +71,12 @@ class Annotater:
             Can be done when no polygon is in the current stack, select a class.
             """
             if self.polygons_details[-1][1]:
-                print(f'Error: {class_id - 1} should select a class, but the current polygon has not been confirmed.')
+                print(f'Error: {class_id} should select a class, but the current polygon has not been confirmed.')
                 return
-            self.polygons_details[-1][0] = class_id - 1
+            self.polygons_details[-1][0] = class_id
 
             handles = [mpatches.Patch(color=color, label=f"Class {i + 1}") for i, color in enumerate(COLORS)]
-            handles.append(mpatches.Patch(color=COLORS[class_id - 1], label=f"Current class"))
+            handles.append(mpatches.Patch(color=COLORS[class_id], label=f"Current class"))
             plt.legend(handles=handles, loc='center left', bbox_to_anchor=(1, 0.5))
             plt.draw()
 
@@ -71,6 +91,10 @@ class Annotater:
             self.remove_polygons()
             self.polygons_details = [[None, []]]
             self.plotted_image.remove()
+            
+            print('Validate, working for', datetime.datetime.now() - self.begin)
+            self.count += 1
+            print('Mean annotation time:', (datetime.datetime.now()-self.begin)/self.count)
 
             plt.draw()
             if self.filenames:
@@ -89,18 +113,32 @@ class Annotater:
                 return
             self.add_polygon()
             self.polygons_details.append([None, []])
+            
+        def r_press_event():
+            """
+            Can be done when no class is selected, toogle the rectangle mode
+            """
+            if len(self.polygons_details[-1][1]) > 1:p
+            if len(self.polygons_details[-1][1]) > 1:
+                print("Can't switch to rectangle mode while drawing polygons")
+            else:
+                self.rectangle_mode = False if self.rectangle_mode else True
+                print(f'Rectangle Mode is now at {self.rectangle_mode}')
 
-        if event.key in '123456789':
-            class_key_event(int(event.key))
+        class_keys = '123456789ab'
+        if event.key in class_keys:
+            class_key_event(class_keys.index(event.key))
         elif event.key == "enter":
             enter_press_event()
         elif event.key == "0":
             zero_press_event()
+        elif event.key == 'r':
+            r_press_event()
 
     def new_image(self, filename, border=0.1):
         self.current_filename = filename
         self.current_image = Image.open(filename)
-        self.plotted_image = plt.imshow(self.current_image, interpolation="bilinear")
+        self.plotted_image = plt.imshow(self.current_image, interpolation="bilinear", cmap='gray')
 
         x_border = int(border * self.current_image.size[0])
         y_border = int(border * self.current_image.size[1])
@@ -156,25 +194,32 @@ class Annotater:
                 continue
             if class_id == void_mask_class:
                 void_mask_polygons.append(points)
-                continue
             if class_id not in masks:
                 new_im = Image.new('L', self.current_image.size)
                 masks[class_id] = new_im, ImageDraw.Draw(new_im)
             masks[class_id][1].polygon(points, fill=255)
             complete_mask_draw.polygon(points, fill=255)
         for points in void_mask_polygons:
-            for (mask, mask_draw) in masks.values():
-                mask_draw.polygon(points, fill=0)
+            for class_id, (mask, mask_draw) in masks.items():
+                if class_id != void_mask_class:
+                    mask_draw.polygon(points, fill=0)
             complete_mask_draw.polygon(points, fill=0)
 
         for class_id, (mask, _) in masks.items():
             mask.save(f"{os.path.splitext(output_filename)[0]}_{class_id+1}.png")
         complete_mask.save(f"{os.path.splitext(output_filename)[0]}.png")
+        
+        save_json({self.current_filename:self.polygons_details})
+        
 
     def __init__(self, filenames, input_folder, mask_folder):
+        print(filenames)
         self.filenames = glob.glob(filenames)
         self.input_folder = input_folder
         self.mask_folder = mask_folder
+        self.rectangle_mode = False
+        self.begin = datetime.datetime.now()
+        self.count = 0
 
         self.fig, self.ax = plt.subplots(figsize=(10, 8))
         self.fig.subplots_adjust(left=-0.052)
@@ -191,8 +236,9 @@ class Annotater:
         self.current_filename = None
         self.current_image = None
         self.polygons_details = [[None, []]]
-
+        
         self.new_image(self.filenames.pop(0))
+        plt.tight_layout()
         plt.show()
 
 
