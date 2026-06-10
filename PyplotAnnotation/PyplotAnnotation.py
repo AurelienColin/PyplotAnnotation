@@ -118,7 +118,6 @@ class Annotater:
             """
             Can be done when no class is selected, toogle the rectangle mode
             """
-            if len(self.polygons_details[-1][1]) > 1:p
             if len(self.polygons_details[-1][1]) > 1:
                 print("Can't switch to rectangle mode while drawing polygons")
             else:
