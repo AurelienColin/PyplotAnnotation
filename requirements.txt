@@ -1,4 +1,2 @@
-pip==22.3
-wheel==0.33.4
 matplotlib>=3.1.1
 fire>=0.2.1
